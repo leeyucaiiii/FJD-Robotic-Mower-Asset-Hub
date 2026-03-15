@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FJD Mower Intelligence Desk</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar panel">
+      <div class="brand-block">
+        <p class="eyebrow">Codex Agent Workspace</p>
+        <h1>FJD Mower Intelligence Desk</h1>
+        <p class="brand-copy">A dark, integrated workspace for exploring positioning, specs, materials, and competitor references across all 7 mower products.</p>
+      </div>
+
+      <label class="search-box" for="productSearch">
+        <span>Product Search</span>
+        <input id="productSearch" type="search" placeholder="Search by product, scenario, or model">
+      </label>
+
+      <div class="sidebar-section">
+        <div class="section-heading">
+          <h2>Products</h2>
+          <span id="sidebarCount" class="badge"></span>
+        </div>
+        <div id="sidebarList" class="sidebar-list"></div>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <section class="hero panel">
+        <div class="hero-copy">
+          <p class="eyebrow">Integrated Product Desk</p>
+          <h2 id="heroTitle">Loading...</h2>
+          <p id="heroSlogan" class="hero-slogan"></p>
+          <p id="heroDescription" class="hero-description"></p>
+          <div id="heroMeta" class="chip-row"></div>
+        </div>
+        <div class="hero-actions">
+          <a id="knowledgePageLink" class="action-button primary" href="#" target="_blank" rel="noreferrer">Open Knowledge Page</a>
+          <button id="jumpPreviewButton" class="action-button ghost" type="button">Jump to Preview</button>
+        </div>
+      </section>
+
+      <div class="workspace-grid">
+        <div class="main-column">
+          <section class="panel">
+            <div class="section-heading wide">
+              <div>
+                <p class="section-kicker">Main Directory</p>
+                <h3>Product Directory</h3>
+              </div>
+              <p class="section-copy">Select a product from the main grid or switch instantly with the search panel on the left.</p>
+            </div>
+            <div id="productGrid" class="product-grid"></div>
+          </section>
+
+          <section class="stats-grid">
+            <article class="stat-card panel">
+              <span class="stat-label">Key Metric</span>
+              <strong id="metricValue" class="stat-value"></strong>
+            </article>
+            <article class="stat-card panel">
+              <span class="stat-label">Coverage</span>
+              <strong id="coverageValue" class="stat-value"></strong>
+            </article>
+            <article class="stat-card panel">
+              <span class="stat-label">Connected Assets</span>
+              <strong id="docCountValue" class="stat-value"></strong>
+            </article>
+            <article class="stat-card panel">
+              <span class="stat-label">Current Gaps</span>
+              <strong id="gapCountValue" class="stat-value"></strong>
+            </article>
+          </section>
+
+          <section class="summary-grid">
+            <article class="panel">
+              <div class="section-heading">
+                <h3>Core Highlights</h3>
+              </div>
+              <div id="highlightsList" class="text-list"></div>
+            </article>
+            <article class="panel">
+              <div class="section-heading">
+                <h3>Key Specs</h3>
+              </div>
+              <div id="specList" class="text-list"></div>
+            </article>
+            <article class="panel">
+              <div class="section-heading">
+                <h3>Competitor Reference</h3>
+              </div>
+              <div id="competitorList" class="pill-list"></div>
+            </article>
+            <article class="panel">
+              <div class="section-heading">
+                <h3>Material Gaps</h3>
+              </div>
+              <div id="gapList" class="text-list"></div>
+            </article>
+          </section>
+
+          <section id="materialsSection" class="panel">
+            <div class="section-heading wide">
+              <div>
+                <p class="section-kicker">Material Explorer</p>
+                <h3>Product Material Library</h3>
+              </div>
+              <div id="materialFilters" class="chip-row"></div>
+            </div>
+            <div id="materialGroups" class="material-groups"></div>
+          </section>
+        </div>
+
+        <aside class="preview-column">
+          <section class="panel preview-panel">
+            <div class="section-heading wide preview-heading">
+              <div>
+                <p class="section-kicker">Live Preview</p>
+                <h3 id="previewTitle">Material Preview</h3>
+              </div>
+              <a id="previewOpenLink" class="action-button ghost" href="#" target="_blank" rel="noreferrer">Open Source File</a>
+            </div>
+            <div id="previewMeta" class="preview-meta"></div>
+            <div id="previewContainer" class="preview-container"></div>
+          </section>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <script src="./data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
