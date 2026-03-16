@@ -10,7 +10,7 @@
     noSpecs: "No key specs extracted yet.",
     previewTitle: "Material Preview",
     noMaterialPreview: "No previewable materials are available for this product yet.",
-    pdfHint: "If embedded PDF preview is not supported in this environment, use “Open Source File” in the top right.",
+    pdfHint: "PDF files are not auto-loaded in the public site. Use Download when you need the file.",
     noSpreadsheetData: "No spreadsheet data could be read.",
     emptyTable: "Empty sheet",
     noImages: "No images were found.",
@@ -401,10 +401,11 @@
 
     if (material.type === "pdf") {
       elements.previewContainer.innerHTML = `
-        <div class="preview-frame-wrap">
-          <iframe src="${material.path}" title="${escapeHtml(material.title)}"></iframe>
+        <div class="pdf-preview-placeholder">
+          <div class="pdf-preview-label">PDF Selected</div>
+          <div class="pdf-preview-title">${escapeHtml(translateMaterialTitle(material))}</div>
+          <div class="pdf-preview-copy">${escapeHtml(UI.pdfHint)}</div>
         </div>
-        <div class="empty-state">${UI.pdfHint}</div>
       `;
       return;
     }
