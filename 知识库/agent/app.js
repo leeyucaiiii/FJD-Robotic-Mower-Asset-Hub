@@ -1,18 +1,13 @@
 (function () {
   const data = window.__FJD_AGENT_DATA__;
   const UI = {
-    all: "All",
+    onlineVersion: "Online Version",
+    printVersion: "Print Version",
     noProductsFound: "No matching products found. Try another keyword.",
-    noGridResults: "No products match the current search.",
-    keyMetricFallback: "To be added",
-    assetsUnit: "assets",
-    gapCountSuffix: "items missing",
-    noGaps: "No major gaps",
     noHighlights: "No core highlights extracted yet.",
-    noSpecs: "No key specs extracted yet.",
     noCompetitors: "No competitor sheet detected, or no competitor names could be identified.",
-    noGapsList: "Core materials are largely complete.",
-    noMaterialsInFilter: "No materials under the current filter.",
+    noMaterialsAvailable: "No materials are available for this product yet.",
+    noSpecs: "No key specs extracted yet.",
     previewTitle: "Material Preview",
     noMaterialPreview: "No previewable materials are available for this product yet.",
     pdfHint: "If embedded PDF preview is not supported in this environment, use “Open Source File” in the top right.",
@@ -25,9 +20,25 @@
     imageCountUnit: "images",
     spreadsheetPreview: "Spreadsheet preview",
     clickToPreview: "Preview on the right",
-    coveragePrefix: "Coverage",
-    docCountLabel: "assets",
+    downloadFile: "Download",
+    previewFile: "Preview",
   };
+  const PRODUCT_DISPLAY_ORDER = ["RCM01", "RM21", "Titan", "FRX", "FR4000", "FL3000", "FV2000"];
+  const CATEGORY_ORDER = [
+    "Golf Course Robots",
+    "Residential Robotic Mowers",
+  ];
+  const PRODUCT_CATEGORY_MAP = {
+    RCM01: "Golf Course Robots",
+    RM21: "Golf Course Robots",
+    Titan: "Golf Course Robots",
+    FRX: "Golf Course Robots",
+    FR4000: "Residential Robotic Mowers",
+    FL3000: "Residential Robotic Mowers",
+    FV2000: "Residential Robotic Mowers",
+  };
+  const BROCHURE_LANGUAGE_ORDER = ["EN", "DE", "FR", "ES", "JA", "IT", "CN"];
+  const MATERIAL_GROUP_ORDER = ["单页 PDF", "说明书", "快速指南", "参数表"];
   const GROUP_LABELS = {
     "知识页": "Knowledge Page",
     "单页 PDF": "Brochure PDF",
@@ -38,6 +49,11 @@
     "说明书": "User Manual",
     "竞品分析": "Competitor Analysis",
     "产品 ID 图": "Product ID Images",
+  };
+  const SLOGAN_FALLBACKS = {
+    FRX: "Professional Lawn Management Made Affordable.",
+    FR4000: "Smart Mowing for Larger Lawns.",
+    FV2000: "PRECISE MOWING, PERFECT LAWNS.",
   };
   const FIXED_TRANSLATIONS = [
     ["家用 / 轻商用 LiDAR 智能割草机（基于现有文案推断）", "Residential / light commercial LiDAR robotic mower (inferred from current materials)"],
@@ -106,7 +122,6 @@
     query: "",
     activeProductKey: getInitialProductKey(),
     activeMaterialPath: null,
-    activeFilter: UI.all,
     activeSheetByPath: {},
     activeImageByPath: {},
   };
@@ -119,18 +134,8 @@
     heroSlogan: document.getElementById("heroSlogan"),
     heroDescription: document.getElementById("heroDescription"),
     heroMeta: document.getElementById("heroMeta"),
-    knowledgePageLink: document.getElementById("knowledgePageLink"),
-    jumpPreviewButton: document.getElementById("jumpPreviewButton"),
-    productGrid: document.getElementById("productGrid"),
-    metricValue: document.getElementById("metricValue"),
-    coverageValue: document.getElementById("coverageValue"),
-    docCountValue: document.getElementById("docCountValue"),
-    gapCountValue: document.getElementById("gapCountValue"),
     highlightsList: document.getElementById("highlightsList"),
-    specList: document.getElementById("specList"),
     competitorList: document.getElementById("competitorList"),
-    gapList: document.getElementById("gapList"),
-    materialFilters: document.getElementById("materialFilters"),
     materialGroups: document.getElementById("materialGroups"),
     previewTitle: document.getElementById("previewTitle"),
     previewOpenLink: document.getElementById("previewOpenLink"),
@@ -144,22 +149,16 @@
     const visibleProducts = getVisibleProducts();
     if (visibleProducts.length > 0 && !visibleProducts.some((product) => product.key === state.activeProductKey)) {
       state.activeProductKey = visibleProducts[0].key;
-      state.activeFilter = UI.all;
       syncActiveMaterial();
       updateHash();
     }
     render();
   });
 
-  elements.jumpPreviewButton.addEventListener("click", () => {
-    elements.materialsSection.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-
   window.addEventListener("hashchange", () => {
     const hashKey = getInitialProductKey();
     if (hashKey !== state.activeProductKey) {
       state.activeProductKey = hashKey;
-      state.activeFilter = UI.all;
       syncActiveMaterial();
       render();
     }
@@ -170,7 +169,7 @@
 
   function getInitialProductKey() {
     const raw = decodeURIComponent(window.location.hash.replace("#", ""));
-    return getProduct(raw) ? raw : data.products[0].key;
+    return getProduct(raw) ? raw : PRODUCT_DISPLAY_ORDER.find((key) => getProduct(key)) || data.products[0].key;
   }
 
   function getProduct(key) {
@@ -179,21 +178,20 @@
 
   function getVisibleProducts() {
     const query = state.query.toLowerCase();
-    if (!query) {
-      return data.products;
-    }
-    return data.products.filter((product) => {
+    const filtered = data.products.filter((product) => {
       const haystack = [
         product.key,
         product.fullName,
+        getProductCategory(product),
         product.classification,
         product.scenarios,
         product.slogan,
       ]
         .join(" ")
         .toLowerCase();
-      return haystack.includes(query);
+      return !query || haystack.includes(query);
     });
+    return filtered.sort((a, b) => productRank(a.key) - productRank(b.key));
   }
 
   function flattenMaterials(product) {
@@ -212,9 +210,20 @@
       state.activeMaterialPath = null;
       return;
     }
-    const materials = flattenMaterials(product);
+    const materials = getVisibleMaterialGroups(product).flatMap((group) =>
+      group.items.map((item) => ({
+        ...item,
+        groupLabel: group.label,
+        groupKey: group.key,
+      }))
+    );
     if (materials.length === 0) {
       state.activeMaterialPath = null;
+      return;
+    }
+    const preferredPath = product.defaultPreview && product.defaultPreview.path;
+    if (preferredPath && materials.some((item) => item.path === preferredPath)) {
+      state.activeMaterialPath = preferredPath;
       return;
     }
     const hasCurrent = materials.some((item) => item.path === state.activeMaterialPath);
@@ -234,7 +243,6 @@
       return;
     }
     state.activeProductKey = key;
-    state.activeFilter = UI.all;
     syncActiveMaterial();
     updateHash();
     render();
@@ -250,18 +258,10 @@
     renderPreview();
   }
 
-  function setActiveFilter(filter) {
-    state.activeFilter = filter;
-    renderMaterials();
-  }
-
   function render() {
     renderSidebar();
     renderHero();
-    renderProductGrid();
-    renderStats();
     renderSummary();
-    renderFilters();
     renderMaterials();
     renderPreview();
   }
@@ -274,17 +274,26 @@
       return;
     }
 
-    elements.sidebarList.innerHTML = visibleProducts
-      .map((product) => {
-        const activeClass = product.key === state.activeProductKey ? " active" : "";
-        return `
-          <button class="sidebar-item${activeClass}" type="button" data-product-key="${escapeHtml(product.key)}">
-            <div class="sidebar-title">${escapeHtml(product.key)}</div>
-            <div class="sidebar-meta">${escapeHtml(translateText(product.scenarios))}</div>
-            <div class="sidebar-meta">${escapeHtml(coverageLabel(product.coverageLabel))} · ${product.docCount} ${UI.assetsUnit}</div>
-          </button>
-        `;
-      })
+    const grouped = groupProductsByCategory(visibleProducts);
+    elements.sidebarList.innerHTML = grouped
+      .map(({ category, products }) => `
+        <section class="sidebar-group">
+          <h3 class="sidebar-group-title">${escapeHtml(category)}</h3>
+          <div class="sidebar-group-items">
+            ${products
+              .map((product) => {
+                const activeClass = product.key === state.activeProductKey ? " active" : "";
+                return `
+                  <button class="sidebar-item${activeClass}" type="button" data-product-key="${escapeHtml(product.key)}">
+                    <div class="sidebar-title">${escapeHtml(product.key)}</div>
+                    <div class="sidebar-meta">${escapeHtml(translateText(product.scenarios))}</div>
+                  </button>
+                `;
+              })
+              .join("")}
+          </div>
+        </section>
+      `)
       .join("");
 
     elements.sidebarList.querySelectorAll("[data-product-key]").forEach((button) => {
@@ -295,60 +304,22 @@
   function renderHero() {
     const product = getProduct(state.activeProductKey);
     elements.heroTitle.textContent = product.fullName;
-    elements.heroSlogan.textContent = translateText(product.slogan);
+    const slogan = getDisplaySlogan(product);
+    elements.heroSlogan.textContent = slogan;
+    elements.heroSlogan.style.display = slogan ? "block" : "none";
     elements.heroDescription.textContent = translateText(product.description);
-    elements.knowledgePageLink.href = product.knowledgePage;
 
     const chips = [
+      getProductCategory(product),
       translateText(product.classification),
       translateText(product.scenarios),
-      `${UI.coveragePrefix} ${coverageLabel(product.coverageLabel)} (${product.coverageCount}/8)`,
     ];
     elements.heroMeta.innerHTML = chips.map((chip) => `<span class="chip">${escapeHtml(chip)}</span>`).join("");
-  }
-
-  function renderProductGrid() {
-    const visibleProducts = getVisibleProducts();
-    if (visibleProducts.length === 0) {
-      elements.productGrid.innerHTML = `<div class="empty-state">${UI.noGridResults}</div>`;
-      return;
-    }
-
-    elements.productGrid.innerHTML = visibleProducts
-      .map((product) => {
-        const activeClass = product.key === state.activeProductKey ? " active" : "";
-        return `
-          <button class="product-tile${activeClass}" type="button" data-product-key="${escapeHtml(product.key)}">
-            <div>
-              <div class="product-title">${escapeHtml(product.fullName)}</div>
-              <div class="product-meta">${escapeHtml(translateText(product.classification))}</div>
-            </div>
-            <div>
-              <div class="product-tagline">${escapeHtml(translateText(product.slogan))}</div>
-              <div class="product-meta">${escapeHtml(translateText(product.scenarios))}</div>
-            </div>
-          </button>
-        `;
-      })
-      .join("");
-
-    elements.productGrid.querySelectorAll("[data-product-key]").forEach((button) => {
-      button.addEventListener("click", () => setActiveProduct(button.dataset.productKey));
-    });
-  }
-
-  function renderStats() {
-    const product = getProduct(state.activeProductKey);
-    elements.metricValue.textContent = translateText(product.specs[0] || UI.keyMetricFallback);
-    elements.coverageValue.textContent = `${coverageLabel(product.coverageLabel)} (${product.coverageCount}/8)`;
-    elements.docCountValue.textContent = `${product.docCount} ${UI.docCountLabel}`;
-    elements.gapCountValue.textContent = product.gaps.length ? `${product.gaps.length} ${UI.gapCountSuffix}` : UI.noGaps;
   }
 
   function renderSummary() {
     const product = getProduct(state.activeProductKey);
     renderTextList(elements.highlightsList, product.highlights, UI.noHighlights);
-    renderTextList(elements.specList, product.specs, UI.noSpecs);
 
     if (product.competitors.length > 0) {
       elements.competitorList.innerHTML = product.competitors
@@ -357,8 +328,6 @@
     } else {
       elements.competitorList.innerHTML = `<div class="empty-state">${UI.noCompetitors}</div>`;
     }
-
-    renderTextList(elements.gapList, product.gaps, UI.noGapsList);
   }
 
   function renderTextList(container, items, emptyText) {
@@ -369,57 +338,32 @@
     container.innerHTML = items.map((item) => `<div class="text-item">${escapeHtml(translateText(item))}</div>`).join("");
   }
 
-  function renderFilters() {
-    const product = getProduct(state.activeProductKey);
-    const filters = [UI.all, ...product.documentGroups.map((group) => translateGroupLabel(group.label))];
-    elements.materialFilters.innerHTML = filters
-      .map((filter) => {
-        const activeClass = filter === state.activeFilter ? " active" : "";
-        return `<button class="chip is-filter${activeClass}" type="button" data-filter="${escapeHtml(filter)}">${escapeHtml(filter)}</button>`;
-      })
-      .join("");
-
-    elements.materialFilters.querySelectorAll("[data-filter]").forEach((button) => {
-      button.addEventListener("click", () => setActiveFilter(button.dataset.filter));
-    });
-  }
-
   function renderMaterials() {
     const product = getProduct(state.activeProductKey);
-    const groups = product.documentGroups.filter(
-      (group) => state.activeFilter === UI.all || translateGroupLabel(group.label) === state.activeFilter
-    );
+    const groups = getVisibleMaterialGroups(product);
 
     if (groups.length === 0) {
-      elements.materialGroups.innerHTML = `<div class="empty-state">${UI.noMaterialsInFilter}</div>`;
+      elements.materialGroups.innerHTML = `<div class="empty-state">${UI.noMaterialsAvailable}</div>`;
       return;
     }
 
     elements.materialGroups.innerHTML = groups
       .map((group) => {
-        const cards = group.items
-          .map((item) => {
-            const activeClass = item.path === state.activeMaterialPath ? " active" : "";
-            const meta =
-              item.type === "gallery"
-                ? `${item.count} ${UI.imageCountUnit}`
-                : item.type === "spreadsheet"
-                  ? UI.spreadsheetPreview
-                  : UI.clickToPreview;
-            return `
-              <button class="material-card${activeClass}" type="button" data-material-path="${escapeHtml(item.path)}">
-                <span class="material-type">${escapeHtml(materialTypeName(item.type))}</span>
-                <div class="material-title">${escapeHtml(translateMaterialTitle(item))}</div>
-                <div class="material-meta">${escapeHtml(meta)}</div>
-              </button>
-            `;
-          })
-          .join("");
+        const cards =
+          group.label === "单页 PDF"
+            ? renderBrochureSections(group)
+            : group.label === "参数表"
+              ? renderSpecificationCards(group)
+              : `
+                <div class="material-card-grid">
+                  ${sortMaterialsForDisplay(group).map((item) => renderMaterialCard(group, item)).join("")}
+                </div>
+              `;
 
         return `
           <section class="material-group">
             <h4>${escapeHtml(translateGroupLabel(group.label))}</h4>
-            <div class="material-card-grid">${cards}</div>
+            ${cards}
           </section>
         `;
       })
@@ -438,16 +382,22 @@
       elements.previewTitle.textContent = UI.previewTitle;
       elements.previewMeta.innerHTML = "";
       elements.previewContainer.innerHTML = `<div class="empty-state">${UI.noMaterialPreview}</div>`;
-      elements.previewOpenLink.href = product.knowledgePage;
+      elements.previewOpenLink.style.display = "none";
       return;
     }
 
-    elements.previewTitle.textContent = translateMaterialTitle(material);
-    elements.previewOpenLink.href = material.path;
-    elements.previewMeta.innerHTML = `
-      <span class="chip">${escapeHtml(translateGroupLabel(material.groupLabel))}</span>
-      <span class="chip">${escapeHtml(materialTypeName(material.type))}</span>
-    `;
+    const isSpecification = material.groupLabel === "参数表";
+    elements.previewTitle.textContent = isSpecification ? translateGroupLabel(material.groupLabel) : translateMaterialTitle(material);
+    elements.previewMeta.innerHTML = isSpecification
+      ? ""
+      : `
+        <span class="chip">${escapeHtml(translateGroupLabel(material.groupLabel))}</span>
+        <span class="chip">${escapeHtml(materialTypeName(material.type))}</span>
+      `;
+    elements.previewOpenLink.style.display = isSpecification ? "none" : "inline-flex";
+    if (!isSpecification) {
+      elements.previewOpenLink.href = material.path;
+    }
 
     if (material.type === "pdf") {
       elements.previewContainer.innerHTML = `
@@ -460,7 +410,7 @@
     }
 
     if (material.type === "spreadsheet") {
-      renderSpreadsheet(material);
+      renderSpreadsheet(material, product);
       return;
     }
 
@@ -481,7 +431,11 @@
     `;
   }
 
-  function renderSpreadsheet(material) {
+  function renderSpreadsheet(material, product) {
+    if (material.groupLabel === "参数表") {
+      elements.previewContainer.innerHTML = renderSpecificationPreview(product);
+      return;
+    }
     const sheets = material.preview && Array.isArray(material.preview.sheets) ? material.preview.sheets : [];
     if (sheets.length === 0) {
       elements.previewContainer.innerHTML = `<div class="empty-state">${UI.noSpreadsheetData}</div>`;
@@ -578,6 +532,167 @@
       return "Knowledge Page";
     }
     return "File";
+  }
+
+  function getProductCategory(product) {
+    return PRODUCT_CATEGORY_MAP[product.key] || "Other Products";
+  }
+
+  function groupProductsByCategory(products) {
+    return CATEGORY_ORDER
+      .map((category) => ({
+        category,
+        products: products
+          .filter((product) => getProductCategory(product) === category)
+          .sort((a, b) => productRank(a.key) - productRank(b.key)),
+      }))
+      .filter((group) => group.products.length > 0);
+  }
+
+  function productRank(productKey) {
+    const index = PRODUCT_DISPLAY_ORDER.indexOf(productKey);
+    return index === -1 ? PRODUCT_DISPLAY_ORDER.length : index;
+  }
+
+  function getVisibleMaterialGroups(product) {
+    return MATERIAL_GROUP_ORDER
+      .map((label) => product.documentGroups.find((group) => group.label === label))
+      .filter(Boolean);
+  }
+
+  function renderBrochureSections(group) {
+    const sorted = sortMaterialsForDisplay(group);
+    const online = sorted.filter((item) => !isPrintBrochure(item));
+    const print = sorted.filter((item) => isPrintBrochure(item));
+    return [online.length ? renderMaterialSubgroup(UI.onlineVersion, group, online) : "", print.length ? renderMaterialSubgroup(UI.printVersion, group, print) : ""]
+      .filter(Boolean)
+      .join("");
+  }
+
+  function renderMaterialSubgroup(title, group, items) {
+    return `
+      <section class="material-subgroup">
+        <h5>${escapeHtml(title)}</h5>
+        <div class="material-card-grid">
+          ${items.map((item) => renderMaterialCard(group, item)).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderMaterialCard(group, item) {
+    const activeClass = item.path === state.activeMaterialPath ? " active" : "";
+    const meta =
+      item.type === "gallery"
+        ? `${item.count} ${UI.imageCountUnit}`
+        : item.type === "spreadsheet"
+          ? UI.spreadsheetPreview
+          : UI.clickToPreview;
+    const downloadable = isDownloadableMaterial(group.label, item);
+    const footer = `
+      <div class="material-actions">
+        <button class="material-action preview" type="button" data-material-path="${escapeHtml(item.path)}">${UI.previewFile}</button>
+        ${downloadable ? `<a class="material-action download" href="${item.path}" download>${UI.downloadFile}</a>` : ""}
+      </div>
+    `;
+    return `
+      <article class="material-card${activeClass}">
+        <span class="material-type">${escapeHtml(materialTypeName(item.type))}</span>
+        <div class="material-title">${escapeHtml(translateMaterialTitle(item))}</div>
+        <div class="material-meta">${escapeHtml(meta)}</div>
+        ${footer}
+      </article>
+    `;
+  }
+
+  function renderSpecificationCards(group) {
+    return `
+      <div class="material-card-grid">
+        ${sortMaterialsForDisplay(group).map((item) => renderSpecificationCard(item)).join("")}
+      </div>
+    `;
+  }
+
+  function renderSpecificationCard(item) {
+    const activeClass = item.path === state.activeMaterialPath ? " active" : "";
+    return `
+      <article class="material-card${activeClass}">
+        <span class="material-type">Specification</span>
+        <div class="material-title">Specification Sheet</div>
+        <div class="material-meta">${escapeHtml(UI.clickToPreview)}</div>
+        <div class="material-actions">
+          <button class="material-action preview" type="button" data-material-path="${escapeHtml(item.path)}">${UI.previewFile}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderSpecificationPreview(product) {
+    if (!product.specs || product.specs.length === 0) {
+      return `<div class="empty-state">${escapeHtml(UI.noSpecs)}</div>`;
+    }
+    return `
+      <div class="spec-preview-list">
+        ${product.specs.map((item) => `<div class="text-item">${escapeHtml(translateText(item))}</div>`).join("")}
+      </div>
+    `;
+  }
+
+  function isDownloadableMaterial(groupLabel, material) {
+    if (!material || !material.path) {
+      return false;
+    }
+    return ["单页 PDF", "快速指南", "说明书"].includes(groupLabel);
+  }
+
+  function sortMaterialsForDisplay(group) {
+    const items = Array.isArray(group.items) ? [...group.items] : [];
+    if (group.label !== "单页 PDF") {
+      return items;
+    }
+    return items.sort((a, b) => compareBrochures(a, b));
+  }
+
+  function compareBrochures(a, b) {
+    const languageDiff = brochureLanguageRank(a.title) - brochureLanguageRank(b.title);
+    if (languageDiff !== 0) {
+      return languageDiff;
+    }
+    const printDiff = Number(isPrintBrochure(a)) - Number(isPrintBrochure(b));
+    if (printDiff !== 0) {
+      return printDiff;
+    }
+    return String(a.title).localeCompare(String(b.title));
+  }
+
+  function brochureLanguageRank(title) {
+    const code = normalizeBrochureLanguage(title);
+    const index = BROCHURE_LANGUAGE_ORDER.indexOf(code);
+    return index === -1 ? BROCHURE_LANGUAGE_ORDER.length : index;
+  }
+
+  function normalizeBrochureLanguage(title) {
+    const raw = String(title).match(/^([A-Z]+(?:\([A-Za-z]+\))?)/);
+    const code = raw ? raw[1] : "";
+    if (code.startsWith("JP")) {
+      return "JA";
+    }
+    if (code.startsWith("CN")) {
+      return "CN";
+    }
+    return code;
+  }
+
+  function isPrintBrochure(item) {
+    return String(item.title).toLowerCase().includes("(for print)");
+  }
+
+  function getDisplaySlogan(product) {
+    const slogan = translateText(product.slogan || "");
+    if (slogan && slogan !== "Not extracted") {
+      return slogan;
+    }
+    return SLOGAN_FALLBACKS[product.key] || "";
   }
 
   function translateGroupLabel(label) {

@@ -1,0 +1,4 @@
+[build]
+  command = "KB_GITHUB_RAW_BASE=https://raw.githubusercontent.com/leeyucaiiii/-/$COMMIT_REF KB_GITHUB_TREE_BASE=https://github.com/leeyucaiiii/-/tree/$COMMIT_REF python3 知识库/scripts/build_knowledge_base.py"
+  publish = "知识库/agent"
+

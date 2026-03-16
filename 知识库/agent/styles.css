@@ -96,6 +96,9 @@ input::placeholder {
   display: grid;
   gap: 24px;
   padding: 24px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .brand-block h1,
@@ -191,6 +194,29 @@ input::placeholder {
 .text-list,
 .pill-list,
 .material-groups {
+  display: grid;
+  gap: 14px;
+}
+
+.sidebar-group,
+.product-category,
+.material-subgroup {
+  display: grid;
+  gap: 12px;
+}
+
+.sidebar-group-title,
+.product-category-heading,
+.material-subgroup h5 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sidebar-group-items,
+.product-grid-inner {
   display: grid;
   gap: 14px;
 }
@@ -371,6 +397,10 @@ input::placeholder {
 }
 
 .product-grid {
+  gap: 24px;
+}
+
+.product-grid-inner {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
@@ -380,7 +410,6 @@ input::placeholder {
   border: 1px solid transparent;
   border-radius: 20px;
   background: rgba(10, 18, 23, 0.84);
-  cursor: pointer;
 }
 
 .product-tile {
@@ -418,7 +447,7 @@ input::placeholder {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.95fr);
   gap: 20px;
 }
 
@@ -435,6 +464,16 @@ input::placeholder {
   background: rgba(7, 12, 16, 0.76);
   line-height: 1.65;
   color: var(--text-strong);
+}
+
+.highlight-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.highlight-list .text-item {
+  min-height: 100%;
 }
 
 .text-item:hover {
@@ -457,6 +496,10 @@ input::placeholder {
   color: var(--accent);
 }
 
+.material-subgroup h5 {
+  font-size: 0.88rem;
+}
+
 .material-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -474,6 +517,48 @@ input::placeholder {
   font-size: 0.82rem;
 }
 
+.material-card {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.material-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.material-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 170, 152, 0.22);
+  background: rgba(7, 12, 16, 0.82);
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.material-action:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+}
+
+.material-action.preview {
+  background: rgba(95, 168, 255, 0.14);
+  color: #d9ebff;
+}
+
+.material-action.download {
+  background: rgba(131, 214, 170, 0.14);
+  color: #e8fff1;
+}
+
 .preview-panel {
   position: sticky;
   top: 24px;
@@ -487,6 +572,11 @@ input::placeholder {
 
 .preview-container {
   min-height: 640px;
+  display: grid;
+  gap: 14px;
+}
+
+.spec-preview-list {
   display: grid;
   gap: 14px;
 }
@@ -664,7 +754,7 @@ td {
 
   .stats-grid,
   .summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

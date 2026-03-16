@@ -16,6 +16,8 @@ ROOT = Path(__file__).resolve().parents[2]
 KB_DIR = ROOT / "知识库"
 PRODUCT_DIR = KB_DIR / "products"
 AGENT_DIR = KB_DIR / "agent"
+GITHUB_RAW_BASE = os.environ.get("KB_GITHUB_RAW_BASE", "").rstrip("/")
+GITHUB_TREE_BASE = os.environ.get("KB_GITHUB_TREE_BASE", "").rstrip("/")
 
 NS = {
     "main": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
@@ -55,11 +57,13 @@ DOC_ORDER = [
     "产品ID图_dir",
 ]
 
+PRODUCT_ORDER = ["RCM01", "RM21", "Titan", "FRX", "FR4000", "FL3000", "FV2000"]
+
 PRODUCT_META = {
     "FL3000": {
         "full_name": "FJD FL3000",
         "classification": "家用 / 轻商用 LiDAR 智能割草机（基于现有文案推断）",
-        "scenarios": "家庭庭院、小型商业场所",
+        "scenarios": "家庭庭院",
     },
     "FR4000": {
         "full_name": "FJD FR4000",
@@ -96,7 +100,7 @@ PRODUCT_META = {
 PRODUCT_META_EN = {
     "FL3000": {
         "classification": "Residential / light commercial LiDAR robotic mower (inferred from current materials)",
-        "scenarios": "Home gardens, small commercial sites",
+        "scenarios": "Home gardens",
     },
     "FR4000": {
         "classification": "Large-property residential / light commercial robotic mower (inferred from specs and material coverage)",
@@ -535,6 +539,16 @@ def englishize_text(value: str) -> str:
 
 
 def url_for(path: Path, base: Path) -> str:
+    if GITHUB_RAW_BASE:
+        try:
+            is_agent_file = path.resolve().is_relative_to(AGENT_DIR.resolve())
+        except FileNotFoundError:
+            is_agent_file = False
+        if not is_agent_file:
+            repo_relative = quote(os.path.relpath(path, ROOT).replace(os.sep, "/"), safe="/()")
+            if path.is_dir() and GITHUB_TREE_BASE:
+                return f"{GITHUB_TREE_BASE}/{repo_relative}"
+            return f"{GITHUB_RAW_BASE}/{repo_relative}"
     relative = os.path.relpath(path, base).replace(os.sep, "/")
     return quote(relative, safe="/()")
 
@@ -670,6 +684,20 @@ def preview_document_type(doc_type: str) -> str:
     return "link"
 
 
+def brochure_priority(item: dict) -> tuple[int, str]:
+    title = item.get("title", "")
+    upper = title.upper()
+    if item.get("group") != DOC_LABELS["单页_pdf"] or item.get("type") != "pdf":
+        return (99, title)
+    if upper.startswith("EN_") and "(FOR PRINT)" not in upper:
+        return (0, title)
+    if upper.startswith("EN_") and "(FOR PRINT)" in upper:
+        return (1, title)
+    if "(FOR PRINT)" not in upper:
+        return (2, title)
+    return (3, title)
+
+
 def xlsx_preview_payload(path: Path, base: Path) -> dict:
     sheets = []
     try:
@@ -730,7 +758,7 @@ def select_english_headers(rows: list[dict[str, str]]) -> list[str]:
 def build_agent_data(records: dict[str, ProductRecord]) -> dict:
     products: list[dict] = []
 
-    for key in PRODUCT_META:
+    for key in PRODUCT_ORDER:
         record = records[key]
         knowledge_content = build_product_page(record, language="en")
 
@@ -837,10 +865,19 @@ def build_agent_data(records: dict[str, ProductRecord]) -> dict:
                 }
             )
 
-        default_preview = next(
-            (candidate for candidate in preview_candidates if candidate["type"] == "pdf"),
-            preview_candidates[0] if preview_candidates else None,
-        )
+        default_preview = None
+        brochure_pdfs = [
+            candidate
+            for candidate in preview_candidates
+            if candidate["group"] == DOC_LABELS["单页_pdf"] and candidate["type"] == "pdf"
+        ]
+        if brochure_pdfs:
+            default_preview = sorted(brochure_pdfs, key=brochure_priority)[0]
+        else:
+            default_preview = next(
+                (candidate for candidate in preview_candidates if candidate["type"] == "pdf"),
+                preview_candidates[0] if preview_candidates else None,
+            )
 
         product_page = PRODUCT_DIR / f"{key}.md"
         knowledge_group = {
@@ -879,8 +916,8 @@ def build_agent_data(records: dict[str, ProductRecord]) -> dict:
         )
 
     return {
-        "title": "FJD Mower Intelligence Desk",
-        "description": "A unified workspace for browsing positioning, specs, materials, and competitor references across all seven mower products.",
+        "title": "FJD Robotic Mower Asset Hub",
+        "description": "A central library for FJD robotic mower brochures, guides, manuals, specs, and supporting sales materials.",
         "products": products,
     }
 
@@ -1018,7 +1055,7 @@ def build_readme(records: dict[str, ProductRecord]) -> str:
         "| --- | --- | --- | --- | --- | --- |",
     ]
 
-    for key in PRODUCT_META:
+    for key in PRODUCT_ORDER:
         record = records[key]
         spec_rows = []
         for path in record.docs.get("参数_xlsx", []):
@@ -1045,7 +1082,7 @@ def build_readme(records: dict[str, ProductRecord]) -> str:
         ]
     )
 
-    for key in PRODUCT_META:
+    for key in PRODUCT_ORDER:
         record = records[key]
         gaps = collect_gaps(record)
         if gaps:
