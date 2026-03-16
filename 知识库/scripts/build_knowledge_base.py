@@ -99,31 +99,31 @@ PRODUCT_META = {
 
 PRODUCT_META_EN = {
     "FL3000": {
-        "classification": "Residential / light commercial LiDAR robotic mower (inferred from current materials)",
+        "classification": "Residential / light commercial LiDAR robotic mower",
         "scenarios": "Home gardens",
     },
     "FR4000": {
-        "classification": "Large-property residential / light commercial robotic mower (inferred from specs and material coverage)",
+        "classification": "Large-property residential / light commercial robotic mower",
         "scenarios": "Large private lawns, light commercial landscaping",
     },
     "FRX": {
-        "classification": "Professional sports field / golf-course robotic mower (inferred from brochure copy)",
+        "classification": "Professional sports field / golf-course robotic mower",
         "scenarios": "Sports fields, golf courses",
     },
     "FV2000": {
-        "classification": "Residential robotic mower (inferred from brochure copy)",
+        "classification": "Residential robotic mower",
         "scenarios": "Home gardens",
     },
     "RCM01": {
-        "classification": "Premium reel-based turf robot (inferred from brochure and website materials)",
+        "classification": "Premium reel-based turf robot",
         "scenarios": "Golf courses, stadium premium turf",
     },
     "RM21": {
-        "classification": "Multi-function robotic turf platform (inferred from brochure and website materials)",
+        "classification": "Multi-function robotic turf platform",
         "scenarios": "Sports fields, golf courses, orchards, turf farms",
     },
     "Titan": {
-        "classification": "Flagship large-area mowing and line-marking platform (inferred from brochure and website materials)",
+        "classification": "Flagship large-area mowing and line-marking platform",
         "scenarios": "Golf courses, sports fields, public green spaces",
     },
 }
