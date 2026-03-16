@@ -10,7 +10,7 @@
     noSpecs: "No key specs extracted yet.",
     previewTitle: "Material Preview",
     noMaterialPreview: "No previewable materials are available for this product yet.",
-    pdfHint: "PDF files are not auto-loaded in the public site. Use Download when you need the file.",
+    pdfHint: "Preview is available on the right. Use Download if you need a local copy.",
     noSpreadsheetData: "No spreadsheet data could be read.",
     emptyTable: "Empty sheet",
     noImages: "No images were found.",
@@ -401,11 +401,10 @@
 
     if (material.type === "pdf") {
       elements.previewContainer.innerHTML = `
-        <div class="pdf-preview-placeholder">
-          <div class="pdf-preview-label">PDF Selected</div>
-          <div class="pdf-preview-title">${escapeHtml(translateMaterialTitle(material))}</div>
-          <div class="pdf-preview-copy">${escapeHtml(UI.pdfHint)}</div>
+        <div class="preview-frame-wrap">
+          <iframe src="${escapeHtml(pdfPreviewSrc(material.path))}" title="${escapeHtml(material.title)}"></iframe>
         </div>
+        <div class="empty-state">${escapeHtml(UI.pdfHint)}</div>
       `;
       return;
     }
@@ -686,6 +685,13 @@
 
   function isPrintBrochure(item) {
     return String(item.title).toLowerCase().includes("(for print)");
+  }
+
+  function pdfPreviewSrc(path) {
+    if (/^https?:\/\//i.test(path)) {
+      return `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(path)}`;
+    }
+    return path;
   }
 
   function getDisplaySlogan(product) {
