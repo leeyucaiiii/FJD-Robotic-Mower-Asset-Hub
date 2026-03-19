@@ -39,6 +39,8 @@
 - [DE_20260206_FJD RCM01 Brochure(for print).pdf](../../%E5%8D%95%E9%A1%B5/RCM01/DE_20260206_FJD%20RCM01%20Brochure(for%20print).pdf)
 - [EN_20260205_FJD RCM01 Brochure(for print).pdf](../../%E5%8D%95%E9%A1%B5/RCM01/EN_20260205_FJD%20RCM01%20Brochure(for%20print).pdf)
 - [EN_20260205_FJD RCM01 Brochure.pdf](../../%E5%8D%95%E9%A1%B5/RCM01/EN_20260205_FJD%20RCM01%20Brochure.pdf)
+- [ES_20260316_FJD RCM01 Brochure(for print).pdf](../../%E5%8D%95%E9%A1%B5/RCM01/ES_20260316_FJD%20RCM01%20Brochure(for%20print).pdf)
+- [ES_20260316_FJD RCM01 Brochure.pdf](../../%E5%8D%95%E9%A1%B5/RCM01/ES_20260316_FJD%20RCM01%20Brochure.pdf)
 - [FR_20260127_FJD RCM01 Brochure(for print).pdf](../../%E5%8D%95%E9%A1%B5/RCM01/FR_20260127_FJD%20RCM01%20Brochure(for%20print).pdf)
 - [FR_20260127_FJD RCM01 Brochure.pdf](../../%E5%8D%95%E9%A1%B5/RCM01/FR_20260127_FJD%20RCM01%20Brochure.pdf)
 - [IT_20260126_FJD RCM01 Brochure(for print).pdf](../../%E5%8D%95%E9%A1%B5/RCM01/IT_20260126_FJD%20RCM01%20Brochure(for%20print).pdf)

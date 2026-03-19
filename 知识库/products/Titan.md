@@ -32,6 +32,8 @@
 ### 单页源文档
 - [Titan单页文档.xlsx](../../%E5%8D%95%E9%A1%B5/Titan/Titan%E5%8D%95%E9%A1%B5%E6%96%87%E6%A1%A3.xlsx)
 ### 单页 PDF
+- [DE_20260316_FJD Titan Brochure(for print).pdf](../../%E5%8D%95%E9%A1%B5/Titan/DE_20260316_FJD%20Titan%20Brochure(for%20print).pdf)
+- [DE_20260316_FJD Titan Brochure.pdf](../../%E5%8D%95%E9%A1%B5/Titan/DE_20260316_FJD%20Titan%20Brochure.pdf)
 - [EN_20260227_FJD Titan Brochure.pdf](../../%E5%8D%95%E9%A1%B5/Titan/EN_20260227_FJD%20Titan%20Brochure.pdf)
 - [EN_20260304_FJD Titan Brochure(for print).pdf](../../%E5%8D%95%E9%A1%B5/Titan/EN_20260304_FJD%20Titan%20Brochure(for%20print).pdf)
 ### 官网文档
